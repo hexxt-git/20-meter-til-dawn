@@ -1,0 +1,19 @@
+body{
+    background-color: #151515;
+    color: #EEE;
+    font-family: monospace;
+    font-size: 35px;
+    font-weight: bold;
+    margin: 0px;
+    font-family: monospace;
+    overflow: hidden;
+}
+canvas {
+    /*cursor: none;*/
+}
+#gui{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    user-select: none;
+}
