@@ -73,6 +73,8 @@ let width = window.innerWidth
 let height = window.innerHeight
 let maxfps = 100
 let maxVelocity = 10
+let cameraX = 0
+let cameraY = 0
 
 canvas.width = width
 canvas.height = height
@@ -118,7 +120,7 @@ class Circle {
             c.strokeStyle = this.srokeStyle;
             c.fillStyle = this.fillStyle;
             c.beginPath();
-            c.arc(this.x, this.y, this.r, 0, 8, false);
+            c.arc(this.x+cameraX, this.y+cameraY, this.r, 0, 8, false);
             c.stroke();
             c.fill();
         }
@@ -149,7 +151,7 @@ class Quad {
         this.render = ()=>{
             c.strokeStyle = this.srokeStyle;
             c.fillStyle = this.fillStyle;
-            c.fillRect( this.x, this.y, this.w, this.h)
+            c.fillRect( this.x+cameraX, this.y+cameraY, this.w, this.h)
         }
     }
 }
@@ -173,47 +175,33 @@ class entity {
         this.render = ()=>{
             c.strokeStyle = this.srokeStyle;
             c.fillStyle = this.fillStyle;
-            c.fillRect( this.x, this.y, this.w, this.h)
+            c.fillRect( this.x+cameraX, this.y+cameraY, this.w, this.h)
         }
 
         this.update = ()=>{
-            if( this.y + this.h < height & this.y > 0 ){
-                this.y += this.vy
-                while (this.y + this.h > height) {
-                    this.y -= 1
-                }
-                while (this.y < 0) {
-                    this.y += 1
-                }
-            }
-            if( this.x + this.w < width & this.x > 0 ){
-                this.x += this.vx
-                while (this.x + this.w > width) {
-                    this.x -= 1
-                }
-                while (this.x < 0) {
-                    this.x += 1
-                }
-            }
-            for( let i in currentMap ){
-                if((this.x >= currentMap[i].x & this.x <= currentMap[i].x + currentMap[i].w)|(this.x + this.w >= currentMap[i].x & this.x + this.w <= currentMap[i].x + currentMap[i].w)){
-                    if((this.y >= currentMap[i].y & this.y <= currentMap[i].y + currentMap[i].h)|(this.y + this.h >= currentMap[i].y & this.y + this.h <= currentMap[i].y + currentMap[i].h)){
-                        let dx = Math.abs( currentMap[i].x - this.x - this.w )
-                        let ix = Math.abs( currentMap[i].x + currentMap[i].w - this.x )
-                        let dy = Math.abs( currentMap[i].y - this.y - this.h )
-                        let iy = Math.abs( currentMap[i].y + currentMap[i].h - this.y )
-                        // move the smallest
-                        if( dx < ix & dx < dy & dx < iy){
-                            this.x -= dx
-                        }
-                        else if( ix < dx & ix < dy & ix < iy){
-                            this.x += ix
-                        }
-                        else if( dy < dx & dy < ix & dy < iy){
-                            this.y -= dy
-                        }
-                        else if( iy < dx & iy < ix & iy < dy){
-                            this.y += iy
+            this.y += this.vy
+            this.x += this.vx
+            for( let a in collidable ){
+                for( let i in collidable[a] ){
+                    if((this.x >= collidable[a][i].x & this.x <= collidable[a][i].x + collidable[a][i].w)|(this.x + this.w >= collidable[a][i].x & this.x + this.w <= collidable[a][i].x + collidable[a][i].w)){
+                        if((this.y >= collidable[a][i].y & this.y <= collidable[a][i].y + collidable[a][i].h)|(this.y + this.h >= collidable[a][i].y & this.y + this.h <= collidable[a][i].y + collidable[a][i].h)){
+                            let dx = Math.abs( collidable[a][i].x - this.x - this.w )
+                            let ix = Math.abs( collidable[a][i].x + collidable[a][i].w - this.x )
+                            let dy = Math.abs( collidable[a][i].y - this.y - this.h )
+                            let iy = Math.abs( collidable[a][i].y + collidable[a][i].h - this.y )
+                            // move the smallest
+                            if( dx < ix & dx < dy & dx < iy){
+                                this.x -= dx
+                            }
+                            else if( ix < dx & ix < dy & ix < iy){
+                                this.x += ix
+                            }
+                            else if( dy < dx & dy < ix & dy < iy){
+                                this.y -= dy
+                            }
+                            else if( iy < dx & iy < ix & iy < dy){
+                                this.y += iy
+                            }
                         }
                     }
                 }
@@ -239,7 +227,7 @@ class bullet {
         this.render = ()=>{
             c.strokeStyle = this.srokeStyle;
             c.fillStyle = this.fillStyle;
-            c.fillRect( this.x, this.y, this.w, this.h)
+            c.fillRect( this.x+cameraX, this.y+cameraY, this.w, this.h)
         }
         
         this.update = ()=>{
@@ -271,7 +259,7 @@ class PlayerGun {
         this.render = ()=>{
             c.strokeStyle = this.srokeStyle;
             c.fillStyle = this.fillStyle;
-            c.fillRect( this.x, this.y, this.w, this.h)
+            c.fillRect( this.x+cameraX, this.y+cameraY, this.w, this.h)
         }
         this.shoot = ()=>{
             //start a timer and only shoot when its 0 to controll the firerate
@@ -316,10 +304,20 @@ function loop(){
     }, 1000 / maxfps);
     c.clearRect( 0, 0, width, height)
     frame++
+    cameraX -= 1
 
 //   --updates--
-    cursor.x = mouse.x
-    cursor.y = mouse.y
+
+    borders = [
+        new Quad( -cameraX, -cameraY-100, width, 101, 'transparent', 'transparent'),
+        new Quad( -cameraX-100, -cameraY, 101, height, 'transparent', 'transparent'),
+        new Quad( -cameraX, -cameraY+height-1, width, 100, 'transparent', 'transparent'),
+        new Quad( -cameraX+width-1, -cameraY, 100, height, 'transparent', 'transparent'),
+    ]
+    collidable = [ currentMap, borders]
+
+    cursor.x = mouse.x - cameraX
+    cursor.y = mouse.y - cameraY
 
     
     player.vx = inputx * player.speed
@@ -328,7 +326,7 @@ function loop(){
     player.update()
 
     playerGun.x = player.x + ( player.w - playerGun.w ) /2
-    playerGun.y = player.y + ( player.h - playerGun.h ) /2
+    playerGun.y = player.y + ( player.h - playerGun.h ) /2 - 5
     
     bullets.forEach( element => element.update() );
 
@@ -353,11 +351,18 @@ let testMap = [
     new Quad( 450, 500, 400, 20, 'white', 'white'),
     new Quad( 950, 450, 200, 20, 'white', 'white'),
     new Quad( 1200, 480, 100, 15, 'white', 'white'),
+    new Quad( 1400, 400, 100, 15, 'white', 'white'),
+]
+let borders = [
+    new Quad( cameraX, cameraY-100, width, 101, 'transparent', 'transparent'),
+    new Quad( cameraX-100, cameraY, 101, height, 'transparent', 'transparent'),
+    new Quad( cameraX, cameraY+height-1, width, 100, 'transparent', 'transparent'),
+    new Quad( cameraX+width-1, cameraY, 100, height, 'transparent', 'transparent'),
 ]
 let currentMap = testMap
-let coliders = [currentMap]
+let collidable = [ currentMap, borders]
 
-let player = new entity( 670, 300, 20, 20, 'green', randomColor())
+let player = new entity( 670, 300, 20, 35, 'green', randomColor())
 let playerGun = new PlayerGun( 0, 0, 10, 10, 'green', 'black')
 let bullets = []
 let inputx = 0
@@ -366,6 +371,9 @@ let inputy = 0
 window.addEventListener( 'keypress', (key)=>{
     if( key.key == 'r'){
         location.reload()
+    }
+    if( key.key == 'w'){
+        player.vy = -15
     }
 })
 window.addEventListener( 'keydown', (key)=>{

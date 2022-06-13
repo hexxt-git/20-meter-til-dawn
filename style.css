@@ -9,7 +9,7 @@ body{
     overflow: hidden;
 }
 canvas {
-    /*cursor: none;*/
+    cursor: none;
 }
 #gui{
     position: absolute;
