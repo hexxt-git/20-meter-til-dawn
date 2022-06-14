@@ -7,9 +7,14 @@ body{
     margin: 0px;
     font-family: monospace;
     overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 canvas {
     cursor: none;
+    outline: solid 1px white;
 }
 #gui{
     position: absolute;

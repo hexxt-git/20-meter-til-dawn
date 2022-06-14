@@ -69,8 +69,8 @@ function intersect( a, b, c, d) {
 
 let canvas = $('canvas')
 let c = canvas.getContext('2d')
-let width = window.innerWidth
-let height = window.innerHeight
+let width = 800
+let height = 600
 let maxfps = 100
 let maxVelocity = 10
 let cameraX = 0
@@ -156,7 +156,7 @@ class Quad {
     }
 }
 class entity {
-    constructor( x, y, w, h, srokeStyle, fillStyle) {
+    constructor( x, y, w, h, speed, hp, maxJumps, srokeStyle, fillStyle) {
         
         this.x = x;
         this.y = y;
@@ -167,7 +167,10 @@ class entity {
         this.vx = 0;
         this.vy = 0;
         
-        this.speed = 5
+        this.speed = speed
+        this.hp = hp
+        this.maxJumps = maxJumps
+        this.jumps = this.maxJumps
 
         this.srokeStyle = srokeStyle;
         this.fillStyle = fillStyle;
@@ -189,7 +192,6 @@ class entity {
                             let ix = Math.abs( collidable[a][i].x + collidable[a][i].w - this.x )
                             let dy = Math.abs( collidable[a][i].y - this.y - this.h )
                             let iy = Math.abs( collidable[a][i].y + collidable[a][i].h - this.y )
-                            // move the smallest
                             if( dx < ix & dx < dy & dx < iy){
                                 this.x -= dx
                             }
@@ -198,6 +200,7 @@ class entity {
                             }
                             else if( dy < dx & dy < ix & dy < iy){
                                 this.y -= dy
+                                this.jumps = this.maxJumps
                             }
                             else if( iy < dx & iy < ix & iy < dy){
                                 this.y += iy
@@ -233,11 +236,20 @@ class bullet {
         this.update = ()=>{
             this.x += this.vx
             this.y += this.vy
+            for( let a in collidable ){
+                for( let i in collidable[a] ){
+                    if((this.x >= collidable[a][i].x & this.x <= collidable[a][i].x + collidable[a][i].w)|(this.x + this.w >= collidable[a][i].x & this.x + this.w <= collidable[a][i].x + collidable[a][i].w)){
+                        if((this.y >= collidable[a][i].y & this.y <= collidable[a][i].y + collidable[a][i].h)|(this.y + this.h >= collidable[a][i].y & this.y + this.h <= collidable[a][i].y + collidable[a][i].h)){
+                            bullets.splice(bullets.indexOf(this), 1)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 class PlayerGun {
-    constructor( x, y, width, height, srokeStyle, fillStyle) {
+    constructor( x, y, width, height, bulletSpeed, accuracy, firerate, srokeStyle, fillStyle) {
         
         this.x = x;
         this.y = y;
@@ -251,9 +263,9 @@ class PlayerGun {
         this.srokeStyle = srokeStyle;
         this.fillStyle = fillStyle;
 
-        this.bulletSpeed = 8
-        this.accuracy = 0.05
-        this.firerate = 100 //        ms to shoot
+        this.bulletSpeed = bulletSpeed
+        this.accuracy = accuracy
+        this.firerate = firerate //        ms to shoot
         this.timeleft = 0
 
         this.render = ()=>{
@@ -304,7 +316,8 @@ function loop(){
     }, 1000 / maxfps);
     c.clearRect( 0, 0, width, height)
     frame++
-    cameraX -= 1
+    cameraX -= 2
+    //cameraY = - player.y + height / 2 + 100
 
 //   --updates--
 
@@ -316,8 +329,8 @@ function loop(){
     ]
     collidable = [ currentMap, borders]
 
-    cursor.x = mouse.x - cameraX
-    cursor.y = mouse.y - cameraY
+    cursor.x = mouse.x - cameraX - canvas.offsetLeft
+    cursor.y = mouse.y - cameraY - canvas.offsetTop
 
     
     player.vx = inputx * player.speed
@@ -346,12 +359,53 @@ function loop(){
 
 let cursor = new Circle( width/2, height/2, 6, 'white', '#fff3')
 
+function flat( xshift, yshift){
+    return [
+        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
+    ]
+}
+function stairs( xshift, yshift){
+    return [
+        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
+        new Quad( xshift+80, yshift+480, 120, 20, 'white', 'white'),
+        new Quad( xshift+320, yshift+360, 120, 20, 'white', 'white'),
+        new Quad( xshift+580, yshift+240, 100, 20, 'white', 'white'),
+    ]
+}
+function parkour( xshift, yshift){
+    return [
+        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
+        new Quad( xshift+0, yshift+450, 30, 150, 'white', 'white'),
+        new Quad( xshift+300, yshift+280, 30, 250, 'white', 'white'),
+        new Quad( xshift+600, yshift+150, 30, 450, 'white', 'white'),
+    ]
+}
+function straigt( xshift, yshift){
+    return [
+        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
+        new Quad( xshift+320, yshift+480, 120, 20, 'white', 'white'),
+        new Quad( xshift+80, yshift+360, 100, 20, 'white', 'white'),
+        new Quad( xshift+580, yshift+360, 100, 20, 'white', 'white'),
+    ]
+}
+function map(length){
+    let map = []
+    for( let i = 0 ; i < length ; i++ ){
+        segmentType = [ stairs, straigt, parkour, flat][rdm(3)]
+        let segment = segmentType( i*800, 0)
+
+        segment.forEach( quad =>{
+            map.push(quad)
+        })
+    }
+    return map
+}
 
 let testMap = [
     new Quad( 450, 500, 400, 20, 'white', 'white'),
     new Quad( 950, 450, 200, 20, 'white', 'white'),
-    new Quad( 1200, 480, 100, 15, 'white', 'white'),
-    new Quad( 1400, 400, 100, 15, 'white', 'white'),
+    new Quad( 1200, 480, 100, 15, 'white', randomColor()),
+    new Quad( 1400, 400, 100, 15, 'white', randomColor()),
 ]
 let borders = [
     new Quad( cameraX, cameraY-100, width, 101, 'transparent', 'transparent'),
@@ -359,11 +413,11 @@ let borders = [
     new Quad( cameraX, cameraY+height-1, width, 100, 'transparent', 'transparent'),
     new Quad( cameraX+width-1, cameraY, 100, height, 'transparent', 'transparent'),
 ]
-let currentMap = testMap
+let currentMap = map(30)
 let collidable = [ currentMap, borders]
 
-let player = new entity( 670, 300, 20, 35, 'green', randomColor())
-let playerGun = new PlayerGun( 0, 0, 10, 10, 'green', 'black')
+let player = new entity( 300, 20, 30, 50, 5, 100, 2, 'green', randomColor())
+let playerGun = new PlayerGun( 0, 0, 16, 16, 10, 0.1, 100, 'green', 'black')
 let bullets = []
 let inputx = 0
 let inputy = 0
@@ -373,7 +427,10 @@ window.addEventListener( 'keypress', (key)=>{
         location.reload()
     }
     if( key.key == 'w'){
-        player.vy = -15
+        if ( player.jumps != 0 ){
+            player.vy = -18
+            player.jumps -= 1
+        }
     }
 })
 window.addEventListener( 'keydown', (key)=>{
