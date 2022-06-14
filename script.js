@@ -1,3 +1,4 @@
+//basic
 function rdm (max){
     return Math.floor(Math.random()*(max +1));
 };
@@ -66,6 +67,48 @@ function intersect( a, b, c, d) {
 
       return {x, y}
 }
+// map generating functions
+function flat( xshift, yshift){
+    return [
+        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
+    ]
+}
+function stairs( xshift, yshift){
+    return [
+        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
+        new Quad( xshift+80, yshift+480, 120, 20, 'white', 'white'),
+        new Quad( xshift+320, yshift+360, 120, 20, 'white', 'white'),
+        new Quad( xshift+580, yshift+240, 100, 20, 'white', 'white'),
+    ]
+}
+function parkour( xshift, yshift){
+    return [
+        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
+        new Quad( xshift+0, yshift+450, 30, 150, 'white', 'white'),
+        new Quad( xshift+300, yshift+280, 30, 250, 'white', 'white'),
+        new Quad( xshift+600, yshift+150, 30, 450, 'white', 'white'),
+    ]
+}
+function straigt( xshift, yshift){
+    return [
+        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
+        new Quad( xshift+320, yshift+480, 120, 20, 'white', 'white'),
+        new Quad( xshift+80, yshift+360, 100, 20, 'white', 'white'),
+        new Quad( xshift+580, yshift+360, 100, 20, 'white', 'white'),
+    ]
+}
+function map(length){
+    let map = []
+    for( let i = 0 ; i < length ; i++ ){
+        segmentType = [ stairs, straigt, parkour, flat][rdm(3)]
+        let segment = segmentType( i*800, 0)
+
+        segment.forEach( quad =>{
+            map.push(quad)
+        })
+    }
+    return map
+}
 
 let canvas = $('canvas')
 let c = canvas.getContext('2d')
@@ -100,6 +143,7 @@ window.addEventListener( 'mouseup', ()=>{
 window.addEventListener( 'mouseleave', ()=>{
     mouse.z = false
 })
+
 
 
 class Circle {
@@ -358,48 +402,6 @@ function loop(){
 }
 
 let cursor = new Circle( width/2, height/2, 6, 'white', '#fff3')
-
-function flat( xshift, yshift){
-    return [
-        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
-    ]
-}
-function stairs( xshift, yshift){
-    return [
-        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
-        new Quad( xshift+80, yshift+480, 120, 20, 'white', 'white'),
-        new Quad( xshift+320, yshift+360, 120, 20, 'white', 'white'),
-        new Quad( xshift+580, yshift+240, 100, 20, 'white', 'white'),
-    ]
-}
-function parkour( xshift, yshift){
-    return [
-        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
-        new Quad( xshift+0, yshift+450, 30, 150, 'white', 'white'),
-        new Quad( xshift+300, yshift+280, 30, 250, 'white', 'white'),
-        new Quad( xshift+600, yshift+150, 30, 450, 'white', 'white'),
-    ]
-}
-function straigt( xshift, yshift){
-    return [
-        new Quad( xshift+10, yshift+590, 800, 10, 'white', 'white'),
-        new Quad( xshift+320, yshift+480, 120, 20, 'white', 'white'),
-        new Quad( xshift+80, yshift+360, 100, 20, 'white', 'white'),
-        new Quad( xshift+580, yshift+360, 100, 20, 'white', 'white'),
-    ]
-}
-function map(length){
-    let map = []
-    for( let i = 0 ; i < length ; i++ ){
-        segmentType = [ stairs, straigt, parkour, flat][rdm(3)]
-        let segment = segmentType( i*800, 0)
-
-        segment.forEach( quad =>{
-            map.push(quad)
-        })
-    }
-    return map
-}
 
 let testMap = [
     new Quad( 450, 500, 400, 20, 'white', 'white'),
