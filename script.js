@@ -97,7 +97,7 @@ function straigt( xshift, yshift){
         new Quad( xshift+580, yshift+360, 100, 20, 'white', 'white'),
     ]
 }
-function map(length){
+function generateMap(length){
     let map = []
     for( let i = 0 ; i < length ; i++ ){
         segmentType = [ stairs, straigt, parkour, flat][rdm(3)]
@@ -109,43 +109,27 @@ function map(length){
     }
     return map
 }
-
+// canvas setup
 let canvas = $('canvas')
 let c = canvas.getContext('2d')
 let width = 800
 let height = 600
 let maxfps = 100
-let maxVelocity = 10
 let cameraX = 0
 let cameraY = 0
-
 canvas.width = width
 canvas.height = height
-
 c.fillStyle = '#CCC'
 c.strokeStyle = '#CCC'
 
+// game variables
+let maxVelocity = 10
 let mouse = {
     x: width/2,
     y: height/2,
     z: false
 }
-window.addEventListener( 'mousemove', ( event)=>{
-    mouse.x = event.x
-    mouse.y = event.y
-})
-window.addEventListener( 'mousedown', ()=>{
-    mouse.z = true
-})
-window.addEventListener( 'mouseup', ()=>{
-    mouse.z = false
-})
-window.addEventListener( 'mouseleave', ()=>{
-    mouse.z = false
-})
-
-
-
+// object classes
 class Circle {
     constructor( x, y, r, srokeStyle, fillStyle) {
         
@@ -176,7 +160,6 @@ class Circle {
 
     }
 }
-
 class Quad {
     constructor( x, y, width, height, srokeStyle, fillStyle) {
         
@@ -348,13 +331,11 @@ class PlayerGun {
         }
     }
 }
-
+// game loop
 let frame = 0
-
 function loop(){
 
 //     --loop--
-
     setTimeout(() => {
         requestAnimationFrame(loop)
     }, 1000 / maxfps);
@@ -364,7 +345,21 @@ function loop(){
     //cameraY = - player.y + height / 2 + 100
 
 //   --updates--
-
+    //cursor
+    cursor.x = mouse.x - cameraX - canvas.offsetLeft
+    cursor.y = mouse.y - cameraY - canvas.offsetTop
+    //player
+    player.vx = inputx * player.speed
+    if (player.vy < maxVelocity ) player.vy += 1
+    player.update()
+    //playergun
+    playerGun.x = player.x + ( player.w - playerGun.w ) /2
+    playerGun.y = player.y + ( player.h - playerGun.h ) /2 - 5
+    if(mouse.z) playerGun.shoot()
+    //bullets    
+    bullets.forEach( element => element.update() );
+    if(bullets.length > 1000) bullets.shift()
+    //map
     borders = [
         new Quad( -cameraX, -cameraY-100, width, 101, 'transparent', 'transparent'),
         new Quad( -cameraX-100, -cameraY, 101, height, 'transparent', 'transparent'),
@@ -373,26 +368,7 @@ function loop(){
     ]
     collidable = [ currentMap, borders]
 
-    cursor.x = mouse.x - cameraX - canvas.offsetLeft
-    cursor.y = mouse.y - cameraY - canvas.offsetTop
-
-    
-    player.vx = inputx * player.speed
-
-    if (player.vy < maxVelocity ) player.vy += 1
-    player.update()
-
-    playerGun.x = player.x + ( player.w - playerGun.w ) /2
-    playerGun.y = player.y + ( player.h - playerGun.h ) /2 - 5
-    
-    bullets.forEach( element => element.update() );
-
-    if(bullets.length > 1000) bullets.shift()
-    
-    if(mouse.z) playerGun.shoot()
-
 //   --rendering--
-
     currentMap.forEach( element => element.render() );
     player.render()
     playerGun.render()
@@ -409,21 +385,30 @@ let testMap = [
     new Quad( 1200, 480, 100, 15, 'white', randomColor()),
     new Quad( 1400, 400, 100, 15, 'white', randomColor()),
 ]
-let borders = [
-    new Quad( cameraX, cameraY-100, width, 101, 'transparent', 'transparent'),
-    new Quad( cameraX-100, cameraY, 101, height, 'transparent', 'transparent'),
-    new Quad( cameraX, cameraY+height-1, width, 100, 'transparent', 'transparent'),
-    new Quad( cameraX+width-1, cameraY, 100, height, 'transparent', 'transparent'),
-]
-let currentMap = map(30)
-let collidable = [ currentMap, borders]
+
+let currentMap = generateMap(30)
+let collidable = [currentMap]
 
 let player = new entity( 300, 20, 30, 50, 5, 100, 2, 'green', randomColor())
 let playerGun = new PlayerGun( 0, 0, 16, 16, 10, 0.1, 100, 'green', 'black')
 let bullets = []
+
+// --input--
 let inputx = 0
 let inputy = 0
-
+window.addEventListener( 'mousemove', ( event)=>{
+    mouse.x = event.x
+    mouse.y = event.y
+})
+window.addEventListener( 'mousedown', ()=>{
+    mouse.z = true
+})
+window.addEventListener( 'mouseup', ()=>{
+    mouse.z = false
+})
+window.addEventListener( 'mouseleave', ()=>{
+    mouse.z = false
+})
 window.addEventListener( 'keypress', (key)=>{
     if( key.key == 'r'){
         location.reload()
