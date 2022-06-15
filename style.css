@@ -21,4 +21,9 @@ canvas {
     top: 0px;
     left: 0px;
     user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
 }
