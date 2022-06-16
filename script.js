@@ -139,7 +139,7 @@ function spawnEnemies(){
         y = rdm(height)-cameraY
     }
     enemies.push(
-        new Entity( x, y, 35, 35, 2.5, 100, rdm(5), 1, 20, 'enemy', 'transparent', randomColor()),
+        new Entity( x, y, 35, 35, random( 2, 3.5), random( 60, 150), random( 6, 15, 1), 1, 20, 'enemy', 'transparent', randomColor()),
     )
 }
 // canvas setup
@@ -390,17 +390,17 @@ class Entity {
                             let dy = Math.abs( collidable[a][i].y - this.y - this.h )
                             let iy = Math.abs( collidable[a][i].y + collidable[a][i].h - this.y )
                             if( dx < ix & dx < dy & dx < iy){
-                                this.x -= dx
+                                if( dx < 200 ) this.x -= dx
                             }
                             else if( ix < dx & ix < dy & ix < iy){
-                                this.x += ix
+                                if( ix < 200 ) this.x += ix
                             }
                             else if( dy < dx & dy < ix & dy < iy){
-                                this.y -= dy
+                                if( dy < 200 ) this.y -= dy
                                 this.jumps = this.maxJumps
                             }
                             else if( iy < dx & iy < ix & iy < dy){
-                                this.y += iy
+                                if( iy < 200 ) this.y += iy
                             }
                         }
                     }
@@ -625,7 +625,7 @@ let collidable = [currentMap]
 let exps = []
 
 let player = new Entity( 400, 500, 30, 50, 5, 5, 0, 1, 19, 'player', 'transparent', randomColor())
-let playerGun = new PlayerGun( 0, 0, 16, 16, 20, 0.2, 300, 20, 'transparent', 'white')
+let playerGun = new PlayerGun( 0, 0, 16, 16, 20, 0.2, 300, 70, 'transparent', 'white')
 let bullets = []
 
 let enemies = []
@@ -701,7 +701,7 @@ let storeItems = [
         name: 'damage',
         exp: 80,
         effect: ()=>{
-            playerGun.damage += 25
+            playerGun.damage += 35
         },
     },
 ]
