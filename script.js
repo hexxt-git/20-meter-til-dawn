@@ -17,7 +17,7 @@ function write (input){
 function writeC (input){
     c.font = "20px monospace";
     c.fillStyle = 'white'
-    c.fillText(JSON.stringify(input), 20, 40);
+    c.fillText( input, 20, 40);
     return void 0;
 };
 function error (input){
@@ -273,6 +273,7 @@ class Exp {
             this.y += this.vy
             for( let a in collidable ){
                 for( let i in collidable[a] ){
+                    if(collidable[a] == this) continue
                     if((this.x >= collidable[a][i].x & this.x <= collidable[a][i].x + collidable[a][i].w)|
                     (this.x + this.w >= collidable[a][i].x & this.x + this.w <= collidable[a][i].x + collidable[a][i].w)|
                     (collidable[a][i].x >= this.x & collidable[a][i].x <= this.x + this.w)|
@@ -337,6 +338,16 @@ class Entity {
             c.strokeStyle = this.srokeStyle;
             c.fillStyle = this.fillStyle;
             c.fillRect( this.x+cameraX, this.y+cameraY, this.w, this.h)
+            if( this.team == 'enemy' ){
+                if( this.vx > 0 ){
+                    c.fillStyle = 'white';
+                    c.fillRect( this.x+cameraX-5, this.y+cameraY+8, 20, 20)
+                }
+                if( this.vx < 0 ){
+                    c.fillStyle = 'white';
+                    c.fillRect( this.x+cameraX+20, this.y+cameraY+8, 20, 20)
+                }
+            }
         }
 
         this.flash = ()=>{
@@ -350,6 +361,18 @@ class Entity {
         }
 
         this.update = ()=>{
+            while( this.vx > maxVelocity){
+                this.vx--
+            }
+            while( this.vx < -maxVelocity){
+                this.vx++
+            }
+            while( this.vy > maxVelocity){
+                this.vy--
+            }
+            while( this.vx < -maxVelocity){
+                this.vy++
+            }
             this.y += this.vy
             this.x += this.vx
             for( let a in collidable ){
@@ -384,33 +407,35 @@ class Entity {
                 }
             }
             for( let i in entities ){
-                if((this.x >= entities[i].x & this.x <= entities[i].x + entities[i].w)|
-                (this.x + this.w >= entities[i].x & this.x + this.w <= entities[i].x + entities[i].w)|
-                (entities[i].x >= this.x & entities[i].x <= this.x + this.w)|
-                (entities[i].x + entities[i].w >= this.x & entities[i].x + entities[i].w <= this.x + this.w)){
-                    if((this.y >= entities[i].y & this.y <= entities[i].y + entities[i].h)|
-                    (this.y + this.h >= entities[i].y & this.y + this.h <= entities[i].y + entities[i].h)|
-                    (entities[i].y >= this.y & entities[i].y <= this.y + this.h)|
-                    (entities[i].y + entities[i].h >= this.y & entities[i].y + entities[i].h <= this.y + this.h)){
-                        
-                        if( this.team == 'enemy' & entities[i].team == 'playerBullet' ){
-                            enemies[enemies.indexOf(this)].flash()
-                            this.hp -= entities[i].damage
-                            this.vx += entities[i].vx
-                            this.vy += entities[i].vy
-                            bullets.splice(bullets.indexOf(entities[i]), 1)
-                            entities.splice(entities.indexOf(entities[i]), 1)
-                            return null
-                        }
-                        if( this.team == 'player' & entities[i].team == 'enemy'){
-                            entities[i].hp = 0
-                            player.hp -= 1
-                            player.flash()
-                            return null
-                        }
-                        if( this.team == 'player' & entities[i].team == 'exp' ){
-                            entities[i].hp = 0
-                            player.exp += entities[i].exp
+                if ( entities[i] != this ){
+                    if((this.x >= entities[i].x & this.x <= entities[i].x + entities[i].w)|
+                    (this.x + this.w >= entities[i].x & this.x + this.w <= entities[i].x + entities[i].w)|
+                    (entities[i].x >= this.x & entities[i].x <= this.x + this.w)|
+                    (entities[i].x + entities[i].w >= this.x & entities[i].x + entities[i].w <= this.x + this.w)){
+                        if((this.y >= entities[i].y & this.y <= entities[i].y + entities[i].h)|
+                        (this.y + this.h >= entities[i].y & this.y + this.h <= entities[i].y + entities[i].h)|
+                        (entities[i].y >= this.y & entities[i].y <= this.y + this.h)|
+                        (entities[i].y + entities[i].h >= this.y & entities[i].y + entities[i].h <= this.y + this.h)){
+                            
+                            if( this.team == 'enemy' & entities[i].team == 'playerBullet' ){
+                                enemies[enemies.indexOf(this)].flash()
+                                this.hp -= entities[i].damage
+                                this.vx += entities[i].vx
+                                this.vy += entities[i].vy
+                                bullets.splice(bullets.indexOf(entities[i]), 1)
+                                entities.splice(entities.indexOf(entities[i]), 1)
+                                return null
+                            }
+                            if( this.team == 'player' & entities[i].team == 'enemy'){
+                                entities[i].hp = 0
+                                player.hp -= 1
+                                player.flash()
+                                return null
+                            }
+                            if( this.team == 'player' & entities[i].team == 'exp' ){
+                                entities[i].hp = 0
+                                player.exp += entities[i].exp
+                            }
                         }
                     }
                 }
@@ -565,14 +590,14 @@ function loop(){
     enemies.forEach( element => element.update())
     //map
     borders = [
-        //new Quad( -cameraX, -cameraY-100, width, 101, 'transparent', 'transparent'),  // top
-        new Quad( -cameraX-100, -cameraY, 101, height, 'transparent', 'transparent'), // left
-        new Quad( -cameraX, -cameraY+height-1, width, 100, 'transparent', 'transparent'),  // bottom
-        new Quad( -cameraX+width-1, -cameraY, 100, height, 'transparent', 'transparent'), // right
+        new Quad( -cameraX, -cameraY-1000, width, 1001, 'transparent', 'transparent'),  // top
+        new Quad( -cameraX-1000, -cameraY, 1001, height, 'transparent', 'transparent'), // left
+        new Quad( -cameraX, -cameraY+height-1, width, 1000, 'transparent', 'transparent'),  // bottom
+        new Quad( -cameraX+width-1, -cameraY, 1000, height, 'transparent', 'transparent'), // right
     ]
-    collidable = [ currentMap, borders]
+    collidable = [ currentMap, borders, enemies]
     entities = [ player, ...enemies, ...bullets, ...exps]
-    if(frame%80==0)spawnEnemies()
+    if(frame%100==0)spawnEnemies()
 
 //   --rendering--
     currentMap.forEach( element => element.render() );
@@ -595,12 +620,12 @@ let testMap = [
     new Quad( 1400, 400, 100, 15, 'white', randomColor()),
 ]
 
-let currentMap = generateMap(30)
+let currentMap = generateMap(1000)
 let collidable = [currentMap]
 let exps = []
 
-let player = new Entity( 400, 500, 30, 50, 5, 3, 0, 1, 19, 'player', 'transparent', randomColor())
-let playerGun = new PlayerGun( 0, 0, 16, 16, 20, 0.2, 100, 50, 'transparent', 'black')
+let player = new Entity( 400, 500, 30, 50, 5, 5, 0, 1, 19, 'player', 'transparent', randomColor())
+let playerGun = new PlayerGun( 0, 0, 16, 16, 20, 0.2, 300, 20, 'transparent', 'white')
 let bullets = []
 
 let enemies = []
@@ -648,5 +673,56 @@ window.addEventListener( 'keyup', (key)=>{
         if(inputx == -1) inputx = 0
     }
 })
+
+let storeItems = [
+    {
+        name: 'jumps',
+        exp: 40,
+        effect: ()=>{
+            player.maxJumps += 1
+        },
+    },
+    {
+        name: 'speed',
+        exp: 50,
+        effect: ()=>{
+            player.speed += 2
+        },
+    },
+    {
+        name: 'fire rate',
+        exp: 35,
+        effect: ()=>{
+            playerGun.firerate *= 0.9
+            write(playerGun.firerate)
+        },
+    },
+    {
+        name: 'damage',
+        exp: 80,
+        effect: ()=>{
+            playerGun.damage += 25
+        },
+    },
+]
+$('store-items').innerHTML = ''
+    for( let i in storeItems ){
+        $('store-items').innerHTML += `
+            <div class="store-item" id="store-${storeItems[i].name}">
+                <div class="item-name">${storeItems[i].name} <span id="${storeItems[i].name}-current">1</span></div>
+                <div class="item-exp"> exp: ${storeItems[i].exp}</div>
+            </div>
+        `
+    }
+    for( let i in storeItems ){
+        $(`store-${storeItems[i].name}`).addEventListener( 'click', ()=>{
+            if( player.exp >= storeItems[i].exp ){
+                player.exp -= storeItems[i].exp
+                storeItems[i].effect()
+                $(`${storeItems[i].name}-current`).innerHTML = eval($(`${storeItems[i].name}-current`).innerHTML) + 1
+            }
+        })
+
+    }
 
 loop()
