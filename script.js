@@ -70,12 +70,10 @@ function intersect( a, b, c, d) {
 // map generating functions
 function flat( xshift, yshift){
     return [
-        new Quad( xshift+0, yshift+590, 800, 10, 'white', 'white'),
     ]
 }
 function stairs( xshift, yshift){
     return [
-        new Quad( xshift+0, yshift+590, 800, 10, 'white', 'white'),
         new Quad( xshift+80, yshift+480, 120, 20, 'white', 'white'),
         new Quad( xshift+320, yshift+360, 120, 20, 'white', 'white'),
         new Quad( xshift+580, yshift+240, 100, 20, 'white', 'white'),
@@ -83,7 +81,6 @@ function stairs( xshift, yshift){
 }
 function parkour( xshift, yshift){
     return [
-        new Quad( xshift+0, yshift+590, 800, 10, 'white', 'white'),
         new Quad( xshift+0, yshift+450, 30, 80, 'white', 'white'),
         new Quad( xshift+160, yshift+350, 30, 100, 'white', 'white'),
         new Quad( xshift+320, yshift+250, 30, 100, 'white', 'white'),
@@ -93,7 +90,6 @@ function parkour( xshift, yshift){
 }
 function straigt( xshift, yshift){
     return [
-        new Quad( xshift+0, yshift+590, 800, 10, 'white', 'white'),
         new Quad( xshift+320, yshift+480, 120, 20, 'white', 'white'),
         new Quad( xshift+80, yshift+360, 100, 20, 'white', 'white'),
         new Quad( xshift+580, yshift+360, 100, 20, 'white', 'white'),
@@ -101,7 +97,6 @@ function straigt( xshift, yshift){
 }
 function start( xshift, yshift){
     return [
-        new Quad( xshift+0, yshift+590, 800, 10, 'white', 'white'),
         new Quad( xshift+365, yshift+360, 100, 20, 'white', 'white'),
     ]
 }
@@ -144,7 +139,7 @@ function spawnEnemies(){
         y = rdm(height)-cameraY
     }
     enemies.push(
-        new entity( x, y, 35, 35, 2.5, 100, 1, 20, 'enemy', 'transparent', randomColor()),
+        new Entity( x, y, 35, 35, 2.5, 100, rdm(5), 1, 20, 'enemy', 'transparent', randomColor()),
     )
 }
 // canvas setup
@@ -248,8 +243,75 @@ class Text {
         }
     }
 }
-class entity {
-    constructor( x, y, w, h, speed, hp, maxJumps, jumpForce, team, srokeStyle, fillStyle) {
+class Exp {
+    constructor( x, y, vx, vy, size, exp, srokeStyle, fillStyle) {
+        
+        this.x = x;
+        this.y = y;
+
+        this.w = size;
+        this.h = size;
+
+        this.vx = vx;
+        this.vy = vy;
+
+        this.team = 'exp'
+        this.exp = exp
+        this.hp = 1
+        
+        this.srokeStyle = srokeStyle;
+        this.fillStyle = fillStyle;
+
+        this.render = ()=>{
+            c.strokeStyle = this.srokeStyle;
+            c.fillStyle = this.fillStyle;
+            c.fillRect( this.x+cameraX, this.y+cameraY, this.w, this.h)
+        }
+        
+        this.update = ()=>{
+            this.x += this.vx
+            this.y += this.vy
+            for( let a in collidable ){
+                for( let i in collidable[a] ){
+                    if((this.x >= collidable[a][i].x & this.x <= collidable[a][i].x + collidable[a][i].w)|
+                    (this.x + this.w >= collidable[a][i].x & this.x + this.w <= collidable[a][i].x + collidable[a][i].w)|
+                    (collidable[a][i].x >= this.x & collidable[a][i].x <= this.x + this.w)|
+                    (collidable[a][i].x + collidable[a][i].w >= this.x & collidable[a][i].x + collidable[a][i].w <= this.x + this.w)){
+                        if((this.y >= collidable[a][i].y & this.y <= collidable[a][i].y + collidable[a][i].h)|
+                        (this.y + this.h >= collidable[a][i].y & this.y + this.h <= collidable[a][i].y + collidable[a][i].h)|
+                        (collidable[a][i].y >= this.y & collidable[a][i].y <= this.y + this.h)|
+                        (collidable[a][i].y + collidable[a][i].h >= this.y & collidable[a][i].y + collidable[a][i].h <= this.y + this.h)){
+                            let dx = Math.abs( collidable[a][i].x - this.x - this.w )
+                            let ix = Math.abs( collidable[a][i].x + collidable[a][i].w - this.x )
+                            let dy = Math.abs( collidable[a][i].y - this.y - this.h )
+                            let iy = Math.abs( collidable[a][i].y + collidable[a][i].h - this.y )
+                            if( dx < ix & dx < dy & dx < iy){
+                                this.x -= dx
+                            }
+                            else if( ix < dx & ix < dy & ix < iy){
+                                this.x += ix
+                            }
+                            else if( dy < dx & dy < ix & dy < iy){
+                                this.y -= dy
+                                this.vy = 0
+                                this.vx = 0
+                            }
+                            else if( iy < dx & iy < ix & iy < dy){
+                                this.y += iy
+                            }
+                        }
+                    }
+                }
+            }
+            if(this.hp <= 0){
+                exps.splice(exps.indexOf(this), 1)
+                entities.splice(entities.indexOf(this), 1)
+            }
+        }
+    }
+}
+class Entity {
+    constructor( x, y, w, h, speed, hp, exp, maxJumps, jumpForce, team, srokeStyle, fillStyle) {
         
         this.x = x;
         this.y = y;
@@ -261,6 +323,7 @@ class entity {
         this.vy = 0;
         
         this.speed = speed
+        this.exp = exp
         this.hp = hp
         this.maxJumps = maxJumps
         this.jumps = this.maxJumps
@@ -330,9 +393,11 @@ class entity {
                     (entities[i].y >= this.y & entities[i].y <= this.y + this.h)|
                     (entities[i].y + entities[i].h >= this.y & entities[i].y + entities[i].h <= this.y + this.h)){
                         
-                        if( entities[i].team == 'playerBullet' & this.team == 'enemy' ){
+                        if( this.team == 'enemy' & entities[i].team == 'playerBullet' ){
                             enemies[enemies.indexOf(this)].flash()
                             this.hp -= entities[i].damage
+                            this.vx += entities[i].vx
+                            this.vy += entities[i].vy
                             bullets.splice(bullets.indexOf(entities[i]), 1)
                             entities.splice(entities.indexOf(entities[i]), 1)
                             return null
@@ -343,6 +408,10 @@ class entity {
                             player.flash()
                             return null
                         }
+                        if( this.team == 'player' & entities[i].team == 'exp' ){
+                            entities[i].hp = 0
+                            player.exp += entities[i].exp
+                        }
                     }
                 }
             }
@@ -350,7 +419,7 @@ class entity {
                 if( this.team == 'enemy' ){
                     enemies.splice(enemies.indexOf(this), 1)
                     entities.splice(entities.indexOf(this), 1)
-                    
+                    exps.push( new Exp( this.x, this.y, random(-2,8), random( -2, -8), 5, this.exp, 'white', '#8f9'))
                 }
             }
         }
@@ -394,66 +463,6 @@ class bullet {
                         (collidable[a][i].y >= this.y & collidable[a][i].y <= this.y + this.h)|
                         (collidable[a][i].y + collidable[a][i].h >= this.y & collidable[a][i].y + collidable[a][i].h <= this.y + this.h)){
                             bullets.splice( bullets.indexOf( this), 1)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-class exp {
-    constructor( x, y, vx, vy, size, ammount, srokeStyle, fillStyle) {
-        
-        this.x = x;
-        this.y = y;
-
-        this.w = size;
-        this.h = size;
-
-        this.vx = vx;
-        this.vy = vy;
-
-        this.team = 'exp'
-        
-        this.srokeStyle = srokeStyle;
-        this.fillStyle = fillStyle;
-
-        this.render = ()=>{
-            c.strokeStyle = this.srokeStyle;
-            c.fillStyle = this.fillStyle;
-            c.fillRect( this.x+cameraX, this.y+cameraY, this.w, this.h)
-        }
-        
-        this.update = ()=>{
-            this.x += this.vx
-            this.y += this.vy
-            for( let a in collidable ){
-                for( let i in collidable[a] ){
-                    if((this.x >= collidable[a][i].x & this.x <= collidable[a][i].x + collidable[a][i].w)|
-                    (this.x + this.w >= collidable[a][i].x & this.x + this.w <= collidable[a][i].x + collidable[a][i].w)|
-                    (collidable[a][i].x >= this.x & collidable[a][i].x <= this.x + this.w)|
-                    (collidable[a][i].x + collidable[a][i].w >= this.x & collidable[a][i].x + collidable[a][i].w <= this.x + this.w)){
-                        if((this.y >= collidable[a][i].y & this.y <= collidable[a][i].y + collidable[a][i].h)|
-                        (this.y + this.h >= collidable[a][i].y & this.y + this.h <= collidable[a][i].y + collidable[a][i].h)|
-                        (collidable[a][i].y >= this.y & collidable[a][i].y <= this.y + this.h)|
-                        (collidable[a][i].y + collidable[a][i].h >= this.y & collidable[a][i].y + collidable[a][i].h <= this.y + this.h)){
-                            let dx = Math.abs( collidable[a][i].x - this.x - this.w )
-                            let ix = Math.abs( collidable[a][i].x + collidable[a][i].w - this.x )
-                            let dy = Math.abs( collidable[a][i].y - this.y - this.h )
-                            let iy = Math.abs( collidable[a][i].y + collidable[a][i].h - this.y )
-                            if( dx < ix & dx < dy & dx < iy){
-                                this.x -= dx
-                            }
-                            else if( ix < dx & ix < dy & ix < iy){
-                                this.x += ix
-                            }
-                            else if( dy < dx & dy < ix & dy < iy){
-                                this.y -= dy
-                                this.jumps = this.maxJumps
-                            }
-                            else if( iy < dx & iy < ix & iy < dy){
-                                this.y += iy
-                            }
                         }
                     }
                 }
@@ -511,7 +520,7 @@ class PlayerGun {
                 if ( vy > 0 ) vy2 = Math.abs(vy2)
                 if ( vy < 0 ) vy2 = -Math.abs(vy2)   // dont judge me it works
              
-                bullets.push( new bullet( this.x, this.y, 6, 6, vx2, vy2, 'playerBullet', this.damage, 'white', 'white'))
+                bullets.push( new bullet( this.x, this.y, 8, 8, vx2, vy2, 'playerBullet', this.damage, 'white', 'white'))
                 this.timeleft = this.firerate
             }
         }
@@ -527,7 +536,7 @@ function loop(){
     }, 1000 / maxfps);
     c.clearRect( 0, 0, width, height)
     frame++
-    cameraX -= 3
+    cameraX -= 2
     //player.x += 3
     //cameraY = - player.y + height / 2 + 100
 
@@ -543,7 +552,11 @@ function loop(){
     playerGun.x = player.x + ( player.w - playerGun.w ) /2
     playerGun.y = player.y + ( player.h - playerGun.h ) /2 - 5
     if(mouse.z) playerGun.shoot()
-    //bullets    
+    //exp
+    exps.forEach( element => { if (element.vy<maxVelocity) element.vy += 0.12 });
+    exps.forEach( element => element.update() );
+    if(exps.length > 150) exps.shift()
+    //bullets
     bullets.forEach( element => element.update() );
     if(bullets.length > 100) bullets.shift()
     if(enemies.length > 150) enemies.shift()
@@ -558,7 +571,7 @@ function loop(){
         new Quad( -cameraX+width-1, -cameraY, 100, height, 'transparent', 'transparent'), // right
     ]
     collidable = [ currentMap, borders]
-    entities = [ player, ...enemies, ...bullets, exps]
+    entities = [ player, ...enemies, ...bullets, ...exps]
     if(frame%80==0)spawnEnemies()
 
 //   --rendering--
@@ -567,8 +580,10 @@ function loop(){
     playerGun.render()
     bullets.forEach( element => element.render() );
     enemies.forEach( element => element.render())
+    exps.forEach( element => element.render() );
     cursor.render()
-    writeC(player.hp)
+    c.fillRect( 0, height-1, width, 20)
+    writeC(`HP:${player.hp} EXP:${player.exp}`)
 }
 
 let cursor = new Circle( width/2, height/2, 6, 'white', '#fff3')
@@ -582,10 +597,10 @@ let testMap = [
 
 let currentMap = generateMap(30)
 let collidable = [currentMap]
-let exps = [ new exp( 20, 20, 2, -2, 5, 10, 'white', 'white')]
+let exps = []
 
-let player = new entity( 400, 500, 30, 50, 5, 3, 1, 19, 'player', 'transparent', randomColor())
-let playerGun = new PlayerGun( 0, 0, 16, 16, 20, 0.1, 100, 100, 'transparent', 'black')
+let player = new Entity( 400, 500, 30, 50, 5, 3, 0, 1, 19, 'player', 'transparent', randomColor())
+let playerGun = new PlayerGun( 0, 0, 16, 16, 20, 0.2, 100, 50, 'transparent', 'black')
 let bullets = []
 
 let enemies = []
