@@ -137,14 +137,14 @@ function enemyAi(enemy){
     }
 }
 function spawnEnemies(){
-        let x = rdm(width)
-        let y = rdm(height)
-        while( Math.abs( player.x - x ) < distanceToSpawn & Math.abs( player.y - y ) < distanceToSpawn ){
-            x = rdm(width)
-            y = rdm(height)
-        }
-        enemies.push(
-        new entity( x-cameraX, y-cameraY, 35, 35, 2.5, 100, 1, 20, 'enemy', 'transparent', randomColor()),
+    let x = rdm(width)-cameraX
+    let y = rdm(height)-cameraY
+    while( Math.abs(player.x-x) < distanceToSpawn & Math.abs(player.y-y) < distanceToSpawn ){
+        x = rdm(width)-cameraX
+        y = rdm(height)-cameraY
+    }
+    enemies.push(
+        new entity( x, y, 35, 35, 2.5, 100, 1, 20, 'enemy', 'transparent', randomColor()),
     )
 }
 // canvas setup
@@ -163,7 +163,7 @@ c.strokeStyle = '#CCC'
 // game variables
 let maxVelocity = 10
 let aiUpdateSpeed = 0.5
-let distanceToSpawn = 250
+let distanceToSpawn = 300
 let mouse = {
     x: width/2,
     y: height/2,
@@ -350,6 +350,7 @@ class entity {
                 if( this.team == 'enemy' ){
                     enemies.splice(enemies.indexOf(this), 1)
                     entities.splice(entities.indexOf(this), 1)
+                    
                 }
             }
         }
@@ -400,8 +401,68 @@ class bullet {
         }
     }
 }
+class exp {
+    constructor( x, y, vx, vy, size, ammount, srokeStyle, fillStyle) {
+        
+        this.x = x;
+        this.y = y;
+
+        this.w = size;
+        this.h = size;
+
+        this.vx = vx;
+        this.vy = vy;
+
+        this.team = 'exp'
+        
+        this.srokeStyle = srokeStyle;
+        this.fillStyle = fillStyle;
+
+        this.render = ()=>{
+            c.strokeStyle = this.srokeStyle;
+            c.fillStyle = this.fillStyle;
+            c.fillRect( this.x+cameraX, this.y+cameraY, this.w, this.h)
+        }
+        
+        this.update = ()=>{
+            this.x += this.vx
+            this.y += this.vy
+            for( let a in collidable ){
+                for( let i in collidable[a] ){
+                    if((this.x >= collidable[a][i].x & this.x <= collidable[a][i].x + collidable[a][i].w)|
+                    (this.x + this.w >= collidable[a][i].x & this.x + this.w <= collidable[a][i].x + collidable[a][i].w)|
+                    (collidable[a][i].x >= this.x & collidable[a][i].x <= this.x + this.w)|
+                    (collidable[a][i].x + collidable[a][i].w >= this.x & collidable[a][i].x + collidable[a][i].w <= this.x + this.w)){
+                        if((this.y >= collidable[a][i].y & this.y <= collidable[a][i].y + collidable[a][i].h)|
+                        (this.y + this.h >= collidable[a][i].y & this.y + this.h <= collidable[a][i].y + collidable[a][i].h)|
+                        (collidable[a][i].y >= this.y & collidable[a][i].y <= this.y + this.h)|
+                        (collidable[a][i].y + collidable[a][i].h >= this.y & collidable[a][i].y + collidable[a][i].h <= this.y + this.h)){
+                            let dx = Math.abs( collidable[a][i].x - this.x - this.w )
+                            let ix = Math.abs( collidable[a][i].x + collidable[a][i].w - this.x )
+                            let dy = Math.abs( collidable[a][i].y - this.y - this.h )
+                            let iy = Math.abs( collidable[a][i].y + collidable[a][i].h - this.y )
+                            if( dx < ix & dx < dy & dx < iy){
+                                this.x -= dx
+                            }
+                            else if( ix < dx & ix < dy & ix < iy){
+                                this.x += ix
+                            }
+                            else if( dy < dx & dy < ix & dy < iy){
+                                this.y -= dy
+                                this.jumps = this.maxJumps
+                            }
+                            else if( iy < dx & iy < ix & iy < dy){
+                                this.y += iy
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 class PlayerGun {
-    constructor( x, y, width, height, bulletSpeed, accuracy, firerate, srokeStyle, fillStyle) {
+    constructor( x, y, width, height, bulletSpeed, accuracy, firerate, damage, srokeStyle, fillStyle) {
         
         this.x = x;
         this.y = y;
@@ -415,6 +476,7 @@ class PlayerGun {
         this.srokeStyle = srokeStyle;
         this.fillStyle = fillStyle;
 
+        this.damage = damage
         this.bulletSpeed = bulletSpeed
         this.accuracy = accuracy
         this.firerate = firerate //        ms to shoot
@@ -449,7 +511,7 @@ class PlayerGun {
                 if ( vy > 0 ) vy2 = Math.abs(vy2)
                 if ( vy < 0 ) vy2 = -Math.abs(vy2)   // dont judge me it works
              
-                bullets.push( new bullet( this.x, this.y, 6, 6, vx2, vy2, 'playerBullet', 30, 'white', 'white'))
+                bullets.push( new bullet( this.x, this.y, 6, 6, vx2, vy2, 'playerBullet', this.damage, 'white', 'white'))
                 this.timeleft = this.firerate
             }
         }
@@ -465,7 +527,8 @@ function loop(){
     }, 1000 / maxfps);
     c.clearRect( 0, 0, width, height)
     frame++
-    cameraX -= 2
+    cameraX -= 3
+    //player.x += 3
     //cameraY = - player.y + height / 2 + 100
 
 //   --updates--
@@ -483,7 +546,7 @@ function loop(){
     //bullets    
     bullets.forEach( element => element.update() );
     if(bullets.length > 100) bullets.shift()
-    if(enemies.length > 100) enemies.shift()
+    if(enemies.length > 150) enemies.shift()
     //enemies
     enemies.forEach( element => enemyAi(element))
     enemies.forEach( element => element.update())
@@ -495,8 +558,8 @@ function loop(){
         new Quad( -cameraX+width-1, -cameraY, 100, height, 'transparent', 'transparent'), // right
     ]
     collidable = [ currentMap, borders]
-    entities = [ player, ...enemies, ...bullets]
-    if(frame%100==0)spawnEnemies()
+    entities = [ player, ...enemies, ...bullets, exps]
+    if(frame%80==0)spawnEnemies()
 
 //   --rendering--
     currentMap.forEach( element => element.render() );
@@ -519,13 +582,14 @@ let testMap = [
 
 let currentMap = generateMap(30)
 let collidable = [currentMap]
+let exps = [ new exp( 20, 20, 2, -2, 5, 10, 'white', 'white')]
 
 let player = new entity( 400, 500, 30, 50, 5, 3, 1, 19, 'player', 'transparent', randomColor())
-let playerGun = new PlayerGun( 0, 0, 16, 16, 10, 0.1, 100, 'transparent', 'black')
+let playerGun = new PlayerGun( 0, 0, 16, 16, 20, 0.1, 100, 100, 'transparent', 'black')
 let bullets = []
 
 let enemies = []
-let entities = [ player, ...enemies]
+let entities = [ player, ...enemies, ...exps]
 // --input--
 let inputx = 0
 let inputy = 0
