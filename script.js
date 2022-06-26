@@ -104,6 +104,7 @@ function generateMap(length){
     let map = []
     for( let i = 0 ; i < length ; i++ ){
         segmentType = [ stairs, straigt, parkour, flat][rdm(3)]
+        segmentType = parkour
         if(i==0) segmentType = flat
         let segment = segmentType( i*800, 0)
 
@@ -535,8 +536,7 @@ class PlayerGun {
                 let vy = cursor.y - this.y
                 vx *= random( 1 - this.accuracy, 1 + this.accuracy)
                 vy *= random( 1 - this.accuracy, 1 + this.accuracy )
-                let tanAlpha = vx / vy
-                let alpha = Math.atan(tanAlpha)
+                let alpha = Math.atan(vx / vy)
                 let vx2 = this.bulletSpeed * Math.sin(alpha)
                 let vy2 = this.bulletSpeed * Math.cos(alpha)
                 
@@ -586,19 +586,22 @@ function loop(){
     if(bullets.length > 100) bullets.shift()
     if(enemies.length > 150) enemies.shift()
     //enemies
-    enemies.forEach( element => enemyAi(element))
     enemies.forEach( element => element.update())
+    if(frame%15==0)enemies.forEach( element => enemyAi(element))
     //map
     borders = [
         new Quad( -cameraX, -cameraY-1000, width, 1001, 'transparent', 'transparent'),  // top
-        new Quad( -cameraX-1000, -cameraY, 1001, height, 'transparent', 'transparent'), // left
+        //new Quad( -cameraX-1000, -cameraY, 1001, height, 'transparent', 'transparent'), // left
         new Quad( -cameraX, -cameraY+height-1, width, 1000, 'transparent', 'transparent'),  // bottom
         new Quad( -cameraX+width-1, -cameraY, 1000, height, 'transparent', 'transparent'), // right
     ]
     collidable = [ currentMap, borders, enemies]
     entities = [ player, ...enemies, ...bullets, ...exps]
     if(frame%100==0)spawnEnemies()
-
+    //loosing
+    if( player.y >= 1000 || player.hp <= 0 ){
+        location.reload()
+    }
 //   --rendering--
     currentMap.forEach( element => element.render() );
     player.render()
@@ -620,9 +623,9 @@ let testMap = [
     new Quad( 1400, 400, 100, 15, 'white', randomColor()),
 ]
 
+let exps = []
 let currentMap = generateMap(1000)
 let collidable = [currentMap]
-let exps = []
 
 let player = new Entity( 400, 500, 30, 50, 5, 5, 0, 1, 19, 'player', 'transparent', randomColor())
 let playerGun = new PlayerGun( 0, 0, 16, 16, 20, 0.2, 300, 70, 'transparent', 'white')
@@ -694,7 +697,6 @@ let storeItems = [
         exp: 35,
         effect: ()=>{
             playerGun.firerate *= 0.9
-            write(playerGun.firerate)
         },
     },
     {
@@ -706,23 +708,23 @@ let storeItems = [
     },
 ]
 $('store-items').innerHTML = ''
-    for( let i in storeItems ){
-        $('store-items').innerHTML += `
-            <div class="store-item" id="store-${storeItems[i].name}">
-                <div class="item-name">${storeItems[i].name} <span id="${storeItems[i].name}-current">1</span></div>
-                <div class="item-exp"> exp: ${storeItems[i].exp}</div>
-            </div>
-        `
-    }
-    for( let i in storeItems ){
-        $(`store-${storeItems[i].name}`).addEventListener( 'click', ()=>{
-            if( player.exp >= storeItems[i].exp ){
-                player.exp -= storeItems[i].exp
-                storeItems[i].effect()
-                $(`${storeItems[i].name}-current`).innerHTML = eval($(`${storeItems[i].name}-current`).innerHTML) + 1
-            }
-        })
+for( let i in storeItems ){
+    $('store-items').innerHTML += `
+        <div class="store-item" id="store-${storeItems[i].name}">
+            <div class="item-name">${storeItems[i].name} <span id="${storeItems[i].name}-current">1</span></div>
+            <div class="item-exp"> exp: ${storeItems[i].exp}</div>
+        </div>
+    `
+}
+for( let i in storeItems ){
+    $(`store-${storeItems[i].name}`).addEventListener( 'click', ()=>{
+        if( player.exp >= storeItems[i].exp ){
+            player.exp -= storeItems[i].exp
+            storeItems[i].effect()
+            $(`${storeItems[i].name}-current`).innerHTML = eval($(`${storeItems[i].name}-current`).innerHTML) + 1
+        }
+    })
 
-    }
+}
 
 loop()
