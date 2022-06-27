@@ -151,6 +151,8 @@ let height = 600
 let maxfps = 60
 let cameraX = 0
 let cameraY = 0
+let difficulty = 150
+let playing = true
 canvas.width = width
 canvas.height = height
 c.fillStyle = '#CCC'
@@ -557,7 +559,7 @@ function loop(){
 
 //     --loop--
     setTimeout(() => {
-        requestAnimationFrame(loop)
+        if(playing) requestAnimationFrame(loop)
     }, 1000 / maxfps);
     c.clearRect( 0, 0, width, height)
     frame++
@@ -591,17 +593,25 @@ function loop(){
     //map
     borders = [
         new Quad( -cameraX, -cameraY-1000, width, 1001, 'transparent', 'transparent'),  // top
-        //new Quad( -cameraX-1000, -cameraY, 1001, height, 'transparent', 'transparent'), // left
+        new Quad( -cameraX-1000, -cameraY, 1001, height, 'transparent', 'transparent'), // left
         new Quad( -cameraX, -cameraY+height-1, width, 1000, 'transparent', 'transparent'),  // bottom
         new Quad( -cameraX+width-1, -cameraY, 1000, height, 'transparent', 'transparent'), // right
     ]
     collidable = [ currentMap, borders, enemies]
     entities = [ player, ...enemies, ...bullets, ...exps]
-    if(frame%100==0)spawnEnemies()
+    if(frame%difficulty==0)spawnEnemies()
     //loosing
     if( player.y >= 1000 || player.hp <= 0 ){
+        playing = false
         location.reload()
     }
+    //difficulty
+    if( frame > 1000 ) difficulty = 100
+    if( frame > 2000 ) difficulty = 80
+    if( frame > 5000 ) difficulty = 60
+    if( frame > 8000 ) difficulty = 40
+    if( frame > 15000 ) difficulty = 20
+    if( frame > 15000 ) difficulty = 20
 //   --rendering--
     currentMap.forEach( element => element.render() );
     player.render()
@@ -704,6 +714,13 @@ let storeItems = [
         exp: 80,
         effect: ()=>{
             playerGun.damage += 35
+        },
+    },
+    {
+        name: 'HP',
+        exp: 200,
+        effect: ()=>{
+            player.hp += 1
         },
     },
 ]
