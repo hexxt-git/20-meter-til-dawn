@@ -140,7 +140,7 @@ function spawnEnemies(){
         y = rdm(height)-cameraY
     }
     enemies.push(
-        new Entity( x, y, 35, 35, random( 2, 3.5), random( 60, 150), random( 6, 15, 1), 1, 20, 'enemy', 'transparent', randomColor()),
+        new Entity( x, y, 35, 35, random( 3, 4), random( 60, 150), random( 6, 15, 1), 1, 20, 'enemy', 'transparent', randomColor()),
     )
 }
 // canvas setup
@@ -606,12 +606,14 @@ function loop(){
         location.reload()
     }
     //difficulty
-    if( frame > 1000 ) difficulty = 100
-    if( frame > 2000 ) difficulty = 80
-    if( frame > 5000 ) difficulty = 60
-    if( frame > 8000 ) difficulty = 40
-    if( frame > 15000 ) difficulty = 20
-    if( frame > 15000 ) difficulty = 20
+    if( frame > 0 ) difficulty = 150
+    if( frame > 1000 ) difficulty = 100 
+    if( frame > 2000 ) difficulty = 80 
+    if( frame > 5000 ) difficulty = 60 
+    if( frame > 8000 ) difficulty = 40 
+    if( frame > 15000 ) difficulty = 20 
+    if( frame > 20000 ) difficulty = 15
+    console.log(difficulty)
 //   --rendering--
     currentMap.forEach( element => element.render() );
     player.render()
